@@ -12,6 +12,8 @@ pub struct BlockHeader {
     pub tx_hash: String,
     /// 上一个区块的哈希
     pub pre_hash: String,
+    /// 困难度
+    pub nonce:u64,
 }
 
 #[derive(Debug)]
@@ -31,8 +33,16 @@ impl Block {
         self.hash = coder::get_hash(&header[..]);
     }
 
+    pub fn mine_block(&mut self,difficulty:usize) {
+      let prefix="0".repeat(difficulty);
+      while !self.hash.starts_with(&prefix) {
+        self.header.nonce+=1;
+        self.set_hash();
+      }
+    }
+
     /// 创建并返回一个新的区块
-    pub fn new_block(data: String, pre_hash: String) -> Block {
+    pub fn new_block(data: String, pre_hash: String,difficulty:usize) -> Block {
         let transactions = coder::my_serialize(&data);
         let tx_hash = coder::get_hash(&transactions[..]);
         let time = Utc::now().timestamp();
@@ -41,11 +51,13 @@ impl Block {
                 time,
                 tx_hash,
                 pre_hash,
+                nonce:0
             },
             hash: "".to_string(),
             data,
         };
         block.set_hash();
+        block.mine_block(difficulty);
         block
     }
 }
